@@ -10,21 +10,32 @@ app = Flask(__name__)
 mongo = MongoClient('localhost', 27017)
 app.db = mongo.namify
 api = Api(app)
+# TODO: Write logic for images class to get names / images
+# based on gender
+# TODO: Validate signup for empty pass or username
+# TODO: Validate signup for username and pass length
+# TODO: Validate signup for existing username
 
-class Signup(Resource):
+class User_collection:
+    def __init__(self):
+        self.user_collection = app.db.users
+
+class Signup(Resource, User_collection):
 
     def post(self):
         user = request.json
-        user_collection = app.db.users
-        add_user = user_collection.insert_one(user)
+        # user_collection = app.db.users
+        # add_user = user_collection.insert_one(user)
+        add_user = self.user_collection.insert_one(user)
     
-class Login(Resource):
+class Login(Resource, User_collection):
 
     def post(self):
-        client_username = request.json['username']
+        client_username = request.json['username'].lower()
         client_pass = request.json['password']
-        user_collection = app.db.users        
-        user = user_collection.find_one({"username": client_username})
+        # user_collection = app.db.users        
+        # user = user_collection.find_one({"username": client_username})
+        user = self.user_collection.find_one({"username": client_username})
         pdb.set_trace()
         if user['password'] == client_pass:
             return user
@@ -33,17 +44,15 @@ class Login(Resource):
             response.status_code = 404
             return response
 
-def get(self):
-    username = request.args.get('username')
-    user_collection = app.db.users
-    user = user_collection.find_one({'username': username})
-    # pdb.set_trace()
-    if user == None:
-        response = jsonify(data=[])
-        response.status_code = 404
-        return response
-    else:
-        return user
+class Images(Resource, User_collection):
+
+    def get(self):
+        gender = request.args.get('gender')
+        if gender.lower() == 'male':
+
+
+
+
 
 @api.representation('application/json')
 def output_json(data, code, headers=None):
@@ -54,6 +63,7 @@ def output_json(data, code, headers=None):
 
 api.add_resource(Signup, '/signup')
 api.add_resource(Login, '/login')
+api.add_resource(Images, '/images')
 
 
 if __name__=='__main__':
