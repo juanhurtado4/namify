@@ -16,11 +16,12 @@ api = Api(app)
 # TODO: Validate signup for username and pass length
 # TODO: Validate signup for existing username
 
-class User_collection:
+class Collections:
     def __init__(self):
         self.user_collection = app.db.users
+        self.image_collection = app.db.images
 
-class Signup(Resource, User_collection):
+class Signup(Resource, Collections):
 
     def post(self):
         user = request.json
@@ -28,7 +29,7 @@ class Signup(Resource, User_collection):
         # add_user = user_collection.insert_one(user)
         add_user = self.user_collection.insert_one(user)
     
-class Login(Resource, User_collection):
+class Login(Resource, Collections):
 
     def post(self):
         client_username = request.json['username'].lower()
@@ -44,13 +45,19 @@ class Login(Resource, User_collection):
             response.status_code = 404
             return response
 
-class Images(Resource, User_collection):
+class Images(Resource, Collections):
 
     def get(self):
+        # pdb.set_trace()
         gender = request.args.get('gender')
-        if gender.lower() == 'male':
-
-
+        if gender.lower() == 'male' or 'female':
+            names_pics = self.image_collection.find({'gender': gender})
+            pdb.set_trace()
+            return names_pics
+        else:
+            response = jsonify(data=[])
+            response.status_code = 404
+            return response
 
 
 
