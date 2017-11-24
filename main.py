@@ -1,65 +1,61 @@
-from flask import Flask, request, redirect, render_template, flash
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
-from flask_restful import Resource, Api
+import json
 import pdb
+from flask import Flask, request, jsonify, make_response
+from pymongo import MongoClient
+from bson import Binary, Code
+from bson.json_util import dumps
+from flask_restful import Resource, Api
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://namify:NewYorkCity@localhost:8889/namify'
-app.config['SQLALCHEMY_ECHO'] = True
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['DEBUG'] = True
-db = SQLAlchemy(app)
+mongo = MongoClient('localhost', 27017)
+app.db = mongo.namify
+api = Api(app)
 
-class User(db.Model):
+class Signup(Resource):
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(120), unique=True)
-    password = db.Column(db.String(120))
-    scores = db.relationship('Score', backref='owner')
-
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
-
-    def __repr__(self):
-        return 'User({!r}, {!r})'.format(self.username, self.password)
-
-class Score(db.Model):
-
-    id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.DateTime)
-    score = db.Column(db.Integer)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    def post(self):
+        user = request.json
+        user_collection = app.db.users
+        add_user = user_collection.insert_one(user)
     
-    def __init__(self, score, user, date=None):
-        self.score = score
-        self.user = user
-        if date == None:
-            date = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-        self.date = date
-    
-    def __repr__(self):
-        return 'Score {!r}, {!r}'.format(self.score, self.user)
-'''
 class Login(Resource):
 
-    def Post(self):
-        print(request.json)
-'''
-# @app.route('/signup', methods=['POST'])
-# def signup():
-#     request = request.json
-#     return request
-@app.route('/signup', methods=['GET'])
-def signup():
-    # user = User.query.filter_by(id=1).first()
-    # request = request.json
+    def post(self):
+        client_username = request.json['username']
+        client_pass = request.json['password']
+        user_collection = app.db.users        
+        user = user_collection.find_one({"username": client_username})
+        pdb.set_trace()
+        if user['password'] == client_pass:
+            return user
+        else:
+            response = jsonify(data=[])
+            response.status_code = 404
+            return response
+
+def get(self):
+    username = request.args.get('username')
+    user_collection = app.db.users
+    user = user_collection.find_one({'username': username})
     # pdb.set_trace()
-    username_request = request.args.get('username', type=str)
-    user = User.query.filter_by(username=username_request).first()
-    return user
+    if user == None:
+        response = jsonify(data=[])
+        response.status_code = 404
+        return response
+    else:
+        return user
+
+@api.representation('application/json')
+def output_json(data, code, headers=None):
+    resp = make_response(dumps(data), code)
+    resp.headers.extend(headers or {})
+    return resp
+
+
+api.add_resource(Signup, '/signup')
+api.add_resource(Login, '/login')
+
 
 if __name__=='__main__':
     app.config['TRAP_BAD_REQUEST_ERRORS'] = True
-    app.run()
+    app.run(debug=True)
