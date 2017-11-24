@@ -56,7 +56,8 @@ def signup():
     # user = User.query.filter_by(id=1).first()
     # request = request.json
     # pdb.set_trace()
-    user = request.args.get('username', type=str)
+    username_request = request.args.get('username', type=str)
+    user = User.query.filter_by(username=username_request).first()
     return user
 
 if __name__=='__main__':
