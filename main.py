@@ -10,11 +10,15 @@ app = Flask(__name__)
 mongo = MongoClient('localhost', 27017)
 app.db = mongo.namify
 api = Api(app)
-# TODO: Write logic for images class to get names / images
-# based on gender
+
 # TODO: Validate signup for empty pass or username
 # TODO: Validate signup for username and pass length
 # TODO: Validate signup for existing username
+
+def display_bad_request(status_code):
+    response = jsonify(data=[])
+    response.status_code = status_code
+    return response
 
 class Collections:
     def __init__(self):
@@ -25,6 +29,9 @@ class Signup(Resource, Collections):
 
     def post(self):
         user = request.json
+        if len(user['username']) < 2:
+
+        pdb.set_trace()
         # user_collection = app.db.users
         # add_user = user_collection.insert_one(user)
         add_user = self.user_collection.insert_one(user)
@@ -41,9 +48,7 @@ class Login(Resource, Collections):
         if user['password'] == client_pass:
             return user
         else:
-            response = jsonify(data=[])
-            response.status_code = 404
-            return response
+            return display_bad_request(404)
 
 class Images(Resource, Collections):
 
@@ -55,11 +60,7 @@ class Images(Resource, Collections):
             pdb.set_trace()
             return names_pics
         else:
-            response = jsonify(data=[])
-            response.status_code = 404
-            return response
-
-
+            return display_bad_request(404)            
 
 @api.representation('application/json')
 def output_json(data, code, headers=None):
