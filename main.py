@@ -6,6 +6,7 @@ from bson import Binary, Code
 from bson.json_util import dumps
 from flask_restful import Resource, Api
 
+
 app = Flask(__name__)
 mongo = MongoClient('localhost', 27017)
 app.db = mongo.namify
@@ -60,7 +61,7 @@ class Images(Resource, Collections):
             pdb.set_trace()
             return names_pics
         else:
-            return display_bad_request(404)            
+            return display_bad_request(400)            
 
 @api.representation('application/json')
 def output_json(data, code, headers=None):

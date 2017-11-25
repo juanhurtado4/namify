@@ -1,9 +1,18 @@
 import string
 
-# TODO: Finish logic for check_signup_username function
-
 def check_signup_pass(password):
-    if len(password)<6 or len(password)>12:
+    '''
+    Password: String
+    Function checks if password meets criteria:
+        * Must be longer than 6 characters but smaller than 12
+        * Must have 1 lowercase letter
+        * Must have 1 uppercase letter
+        * Must have 1 character
+        * Must have 1 number
+        * Cannot have any whitespace characters
+    Returns Bool
+    '''
+    if len(password) < 6 or len(password) > 12:
         return False
     counter = {'lower': 0, 'upper': 0, 'char': 0, 'digit': 0}
     for char in password:
@@ -22,4 +31,19 @@ def check_signup_pass(password):
     return False
 
 def check_signup_username(username):
-    pass
+    '''
+    Username: String
+    Function checks if username meets criteria:
+        * Must be longer than 6 characters but smaller than 12
+        * First character must be a letter
+        * Can only have letters and numbers
+    Returns Bool
+    '''
+    if len(username) < 6 or len(username) > 12:
+        return False
+    if not username[0].isalpha():
+        return False
+    for char in username:
+        if char in string.whitespace or char in string.punctuation:
+            return False
+    return True
