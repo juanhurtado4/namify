@@ -1,25 +1,29 @@
-import json
-import pdb
+from validate_signup import check_signup_pass, check_signup_username
+from hash_password import make_hash_pass, check_hash_pass
 from flask import Flask, request, jsonify, make_response
+from flask_restful import Resource, Api
+from bson.json_util import dumps
 from pymongo import MongoClient
 from bson import Binary, Code
-from bson.json_util import dumps
-from flask_restful import Resource, Api
+import json
+import pdb
 
+# TODO: 
+# Refactor Login class:
+#     * Find username
+#     * Check if username exist
+#     * If not respond with 404
+#     * Check if password is correct
+#     * If not respond with 401
+#     * If everything is correct respond with 200
 
 app = Flask(__name__)
 mongo = MongoClient('localhost', 27017)
 app.db = mongo.namify
 api = Api(app)
 
-# TODO: Validate signup for empty pass or username
-# TODO: Validate signup for username and pass length
-# TODO: Validate signup for existing username
-
-def display_bad_request(status_code):
-    response = jsonify(data=[])
-    response.status_code = status_code
-    return response
+def display_response_code(status_code):
+    return (None, status_code, None)
 
 class Collections:
     def __init__(self):
@@ -29,15 +33,25 @@ class Collections:
 class Signup(Resource, Collections):
 
     def post(self):
-        user = request.json
-        if len(user['username']) < 2:
+        username = request.json['username']
+        password = request.json['password']
+        existing_user = self.user_collection.find_one({'username': username})
 
-        pdb.set_trace()
-        # user_collection = app.db.users
-        # add_user = user_collection.insert_one(user)
+        if existing_user != None:
+            return display_response_code(409)
+        # pdb.set_trace()
+        if (check_signup_username(username) == False or 
+            check_signup_pass(password) == False):
+            return display_response_code(422)
+
+        hash_pass = make_hash_pass(password)
+        user = {'username': username, 'password': hash_pass, 'score': []}
         add_user = self.user_collection.insert_one(user)
+
+        return display_response_code(201)
     
 class Login(Resource, Collections):
+
 
     def post(self):
         client_username = request.json['username'].lower()
@@ -49,7 +63,7 @@ class Login(Resource, Collections):
         if user['password'] == client_pass:
             return user
         else:
-            return display_bad_request(404)
+            return display_response_code(404)
 
 class Images(Resource, Collections):
 
@@ -61,7 +75,7 @@ class Images(Resource, Collections):
             pdb.set_trace()
             return names_pics
         else:
-            return display_bad_request(400)            
+            return display_response_code(400)            
 
 @api.representation('application/json')
 def output_json(data, code, headers=None):
