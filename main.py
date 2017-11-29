@@ -22,8 +22,8 @@ mongo = MongoClient('localhost', 27017)
 app.db = mongo.namify
 api = Api(app)
 
-def display_response_code(status_code):
-    return (None, status_code, None)
+def display_response(status_code, json=None):
+    return (json, status_code, None)
 
 class Collections:
     def __init__(self):
@@ -38,32 +38,30 @@ class Signup(Resource, Collections):
         existing_user = self.user_collection.find_one({'username': username})
 
         if existing_user != None:
-            return display_response_code(409)
+            return display_response(409)
         # pdb.set_trace()
         if (check_signup_username(username) == False or 
             check_signup_pass(password) == False):
-            return display_response_code(422)
+            return display_response(422)
 
         hash_pass = make_hash_pass(password)
         user = {'username': username, 'password': hash_pass, 'score': []}
         add_user = self.user_collection.insert_one(user)
 
-        return display_response_code(201)
+        return display_response(201)
     
 class Login(Resource, Collections):
 
-
-    def post(self):
-        client_username = request.json['username'].lower()
-        client_pass = request.json['password']
-        # user_collection = app.db.users        
-        # user = user_collection.find_one({"username": client_username})
+    def get(self):
+        client_username = request.authorization.username
+        client_pass = request.authorization.password
         user = self.user_collection.find_one({"username": client_username})
-        pdb.set_trace()
-        if user['password'] == client_pass:
-            return user
-        else:
-            return display_response_code(404)
+        if user is None:
+            return display_response(404)
+        if check_hash_pass(client_pass, user['password']) == True:
+            return display_response(200, user)
+
+        return display_response(401)
 
 class Images(Resource, Collections):
 
@@ -75,7 +73,7 @@ class Images(Resource, Collections):
             pdb.set_trace()
             return names_pics
         else:
-            return display_response_code(400)            
+            return display_response(400)            
 
 @api.representation('application/json')
 def output_json(data, code, headers=None):
