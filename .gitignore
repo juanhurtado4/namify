@@ -4,3 +4,5 @@ build_a_blog_master
 build_a_blog-master
 headshots
 .cache/
+__init__.py
+user_info.txt

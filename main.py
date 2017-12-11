@@ -8,15 +8,6 @@ from bson import Binary, Code
 import json
 import pdb
 
-# TODO: 
-# Refactor Login class:
-#     * Find username
-#     * Check if username exist
-#     * If not respond with 404
-#     * Check if password is correct
-#     * If not respond with 401
-#     * If everything is correct respond with 200
-
 app = Flask(__name__)
 mongo = MongoClient('localhost', 27017)
 app.db = mongo.namify
@@ -56,6 +47,7 @@ class Login(Resource, Collections):
         client_username = request.authorization.username
         client_pass = request.authorization.password
         user = self.user_collection.find_one({"username": client_username})
+
         if user is None:
             return display_response(404)
         if check_hash_pass(client_pass, user['password']) == True:
@@ -70,10 +62,20 @@ class Images(Resource, Collections):
         gender = request.args.get('gender')
         if gender.lower() == 'male' or 'female':
             names_pics = self.image_collection.find({'gender': gender})
-            pdb.set_trace()
-            return names_pics
+            # pdb.set_trace()
+            return display_response(200, names_pics)
         else:
-            return display_response(400)            
+            return display_response(400) 
+
+    def post(self):
+        images = request.json
+        # print(images['results'][0])
+        for image in images['results']:
+            # print(type(image))
+            self.image_collection.insert_one(image)
+        # add_images = self.image_collection.insert_one(images)
+
+
 
 @api.representation('application/json')
 def output_json(data, code, headers=None):
