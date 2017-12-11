@@ -6,3 +6,5 @@ headshots
 .cache/
 __init__.py
 user_info.txt
+.DS_store
+.vscode/
