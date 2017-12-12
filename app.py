@@ -2,6 +2,7 @@ from validate_signup import check_signup_pass, check_signup_username
 from hash_password import make_hash_pass, check_hash_pass
 from flask import Flask, request, jsonify, make_response
 from flask_restful import Resource, Api
+from bson.json_util import loads
 from bson.json_util import dumps
 from pymongo import MongoClient
 from bson import Binary, Code
@@ -10,7 +11,7 @@ import pdb
 
 app = Flask(__name__)
 mongo = MongoClient(
-    'mongodb: // namify_admin: NewYorkCity@ds161169.mlab.com: 61169 / namify'
+    'mongodb://namify_admin:NewYorkCity@ds135966.mlab.com:35966/namify'
 )
 app.db = mongo.namify
 api = Api(app)
@@ -71,7 +72,11 @@ class Images(Resource, Collections):
 
     def post(self):
         images = request.json
+        # images = loads(images)
+        # for image in images:
         for image in images['results']:
+            # image_str = str(image)
+            # self.image_collection.insert_one(loads(image_str))
             self.image_collection.insert_one(image)
 
 
